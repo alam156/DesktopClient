@@ -1,5 +1,7 @@
 package com.example.demodesktopcertificateextractor;
 
+import java.security.cert.X509Certificate;
+
 public class CertificateInfo {
     public String name;
 
@@ -7,6 +9,25 @@ public class CertificateInfo {
 
     public String publicKey;
 
+    public String certificate;
+
+    public String[] certificateChain;
+
+    public String getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
+    }
+
+    public String[] getCertificateChain() {
+        return certificateChain;
+    }
+
+    public void setCertificateChain(String[] certificateChain) {
+        this.certificateChain = certificateChain;
+    }
     public CertificateInfo() {
     }
 
