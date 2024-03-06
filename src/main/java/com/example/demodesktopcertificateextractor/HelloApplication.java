@@ -51,8 +51,8 @@ public class HelloApplication extends Application {
     public String filePathFinal;
     private static final String JSON_LIST_URL = "http://localhost:8089/api/get-certificates-list";
 
-    private static final String JSON_LIST_URL_PROMPT = "http://localhost:8089/api/get-certificates-list-prompt";
-    private static final String JSON_XML_SIGN_URL = "http://localhost:8089/api/sign-xml-prompt";
+    private static final String JSON_LIST_URL_PROMPT = "http://localhost:8089/api/show-certificates-list";
+    private static final String JSON_XML_SIGN_URL = "http://localhost:8089/api/sign-hash";
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Demo Signature App");
