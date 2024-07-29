@@ -332,7 +332,7 @@ public class HelloApplication extends Application {
         PasswordInputCallback passwordInputCallback = new PasswordInputCallback() {
             @Override
             public char[] getPassword() {
-                return "aSdf1234***".toCharArray();
+                return "aSdf1234**".toCharArray();
             }
         };
         try(Pkcs11SignatureToken token = new Pkcs11SignatureToken("/usr/local/lib/libeTPkcs11.dylib",passwordInputCallback)) {
