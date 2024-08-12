@@ -113,8 +113,9 @@ public class HelloApplication extends Application {
                 List<CertificateToken> certTokens = new ArrayList<>();
                // CertificateToken baseCertificate = null;
                 if (selectedObject != null) {
-                    signXmlDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
+                    //signXmlDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
                     //signPdfDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
+                    signPdfDemoWithCertificate(filePathFinal,"aSdf1234**","3C70BBE13F880766");
                     File file = new File(filePathFinal);
                     DSSDocument toSignDocument = new FileDocument(file);
 
@@ -437,6 +438,117 @@ public class HelloApplication extends Application {
 
         primaryStage.setScene(new Scene(vbox, 300, 250));
         primaryStage.show();
+    }
+
+    public void signPdfDemoWithCertificate(String filePath, String password, String alias) {
+        try {
+            JSONObject jsonRequest = new JSONObject();
+            jsonRequest.put("password", password);
+            StringEntity params = new StringEntity(jsonRequest.toString());
+
+            HttpClient clientForRequest = HttpClient.newHttpClient();
+
+            HttpRequest httpRequest = HttpRequest.newBuilder(URI.create("http://localhost:8089/api/get-certificates-list"))
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(EntityUtils.toString(params)))
+                    .build();
+
+            HttpResponse<String> httpResponse = clientForRequest.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            String jsonResponse = httpResponse.body();
+            ObjectMapper objectMapper = new ObjectMapper();
+            Response responseJSON = objectMapper.readValue(jsonResponse, Response.class);
+            CertificateInfo info = responseJSON.certificateList.get(0);
+            System.out.println(info.certificate);
+            List<CertificateToken> certTokens = new ArrayList<>();
+            for(String certData : info.certificateChain) {
+                ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(certData));
+                ObjectInput in = new ObjectInputStream(bis);
+                X509Certificate cert = (X509Certificate) in.readObject();
+                bis.close();
+                certTokens.add(new CertificateToken(cert));
+            }
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(info.certificate));
+            ObjectInput in = new ObjectInputStream(bis);
+            X509Certificate cert = (X509Certificate) in.readObject();
+            bis.close();
+            CertificateToken baseCertificate = new CertificateToken(cert);
+
+
+            File file = new File(filePath);
+            DSSDocument toSignDocument = new FileDocument(file);
+            //String pkcs12TokenFile = "C:\\Users\\Ahad\\Downloads\\deliverables-V1\\SampleAhad.p12.pfx";
+            //SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
+            //DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
+            PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+            parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
+            parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
+            parameters.setCertificateChain(certTokens);
+            parameters.setSigningCertificate(baseCertificate);
+            //parameters.setSigningCertificate(privateKey.getCertificate());
+            //parameters.setCertificateChain(privateKey.getCertificateChain());
+
+
+            SignatureImageParameters imageParameters = new SignatureImageParameters();
+            SignatureImageTextParameters textParameters = new SignatureImageTextParameters();
+            DSSFont font = new DSSJavaFont(Font.SERIF);
+            font.setSize(8); // Specifies the text size value (the default font size is 12pt)
+            textParameters.setFont(font);
+            textParameters.setTextColor(Color.BLUE);
+            //textParameters.setText(privateKey.getCertificate().getCertificate().getSubjectX500Principal().getName().substring(3,24) + "\n" +
+             //       "My signature");
+            textParameters.setText(baseCertificate.getCertificate().getSubjectX500Principal().getName().substring(3,24) + "\n" +
+                    "My signature");
+            imageParameters.setTextParameters(textParameters);
+            SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
+            imageParameters.setFieldParameters(fieldParameters);
+            fieldParameters.setOriginX(200);
+            fieldParameters.setOriginY(600);
+            //fieldParameters.setFieldId("ExistingSignatureField");
+
+
+            parameters.setImageParameters(imageParameters);
+            CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
+            PAdESService service = new PAdESService(commonCertificateVerifier);
+            ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
+
+            DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+            //Digest digest = new Digest(digestAlgorithm,DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
+            System.out.println("raw hash: " + Base64.getEncoder().encodeToString(dataToSign.getBytes()));
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm,dataToSign.getBytes())));
+            Digest digest = new Digest(DigestAlgorithm.SHA256, addPadding(DSSUtils.digest(DigestAlgorithm.SHA256, dataToSign.getBytes())));
+            JSONObject json = new JSONObject();
+            json.put("password", password);
+            json.put("pdfHash", Base64.getEncoder().encodeToString(digest.getValue()));
+            json.put("alias",alias);
+            StringEntity paramsTemp = new StringEntity(json.toString());
+
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:8089/api/sign-pdf"))
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(EntityUtils.toString(paramsTemp)))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("response from pdf func:" + response.body().toString());
+            System.out.println("truncated response hash: " + response.body().substring(69,response.body().toString().length()-2));
+            //System.out.println("Enter your string: \n");
+
+            //Scanner scanner = new Scanner(System.in);
+            //String str = scanner.nextLine();
+            byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.body().substring(69,response.body().toString().length()-2)));
+            SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
+
+            DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
+            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-demo.pdf");
+
+        } catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public void signPdfDemo(String filePath, String password, String alias) {
