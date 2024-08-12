@@ -13,6 +13,16 @@ public class CertificateInfo {
 
     public String[] certificateChain;
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String type;
+
     public String getCertificate() {
         return certificate;
     }

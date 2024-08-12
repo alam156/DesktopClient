@@ -86,7 +86,9 @@ public class HelloApplication extends Application {
                 // You can use filePath as needed
             }
         });
-        ListView<CertificateInfo> responseListView = new ListView<>();
+        ListView<CertificateInfo>
+
+                responseListView = new ListView<>();
         responseListView.setCellFactory(new Callback<ListView<CertificateInfo>, ListCell<CertificateInfo>>() {
             @Override
             public ListCell<CertificateInfo> call(ListView<CertificateInfo> param) {
@@ -111,6 +113,11 @@ public class HelloApplication extends Application {
                 List<CertificateToken> certTokens = new ArrayList<>();
                // CertificateToken baseCertificate = null;
                 if (selectedObject != null) {
+                    signXmlDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
+                    //signPdfDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
+                    File file = new File(filePathFinal);
+                    DSSDocument toSignDocument = new FileDocument(file);
+
                     Task<String> task = new Task<>() {
 
                         @Override
@@ -130,18 +137,74 @@ public class HelloApplication extends Application {
                                 connection.setRequestProperty("Content-Type", "application/json");
                                 Map<String, String> requestBodyMap = new HashMap<>();
                                 requestBodyMap.put("alias",selectedObject.alias );
-                                File file = new File(filePathFinal);
-                                DSSDocument toSignDocument = new FileDocument(file);
+                                requestBodyMap.put("type",selectedObject.type);
 
-                                /*String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/sample.p12";
-                                SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
-                                DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);*/
+
+
+                                //String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/SampleAhad.p12";
+//                                String pkcs12TokenFile = "C:\\Users\\Ahad\\Downloads\\deliverables-V1\\SampleAhad.p12.pfx";
+//                                SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
+//                                DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
+
+
+                                PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+//                                parameters.setSigningCertificate(privateKey.getCertificate());
+//                                parameters.setCertificateChain(privateKey.getCertificateChain());
+                                parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
+                                parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
+
+                                ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
+                                ObjectInput in = new ObjectInputStream(bis);
+                                X509Certificate cert = (X509Certificate) in.readObject();
+                                bis.close();
+                                CertificateToken baseCertificate = new CertificateToken(cert);
+                                parameters.setSigningCertificate(baseCertificate);
+                                parameters.setCertificateChain(certTokens);
+
+                                SignatureImageParameters imageParameters = new SignatureImageParameters();
+                                SignatureImageTextParameters textParameters = new SignatureImageTextParameters();
+                                DSSFont font = new DSSJavaFont(Font.SERIF);
+                                font.setSize(8);
+                                textParameters.setFont(font);
+                                textParameters.setTextColor(Color.BLUE);
+                                textParameters.setText(baseCertificate.getSubject().getPrincipal().getName().substring(3,24) + "\n" + "My Signature");
+                                imageParameters.setTextParameters(textParameters);
+                                SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
+                                imageParameters.setFieldParameters(fieldParameters);
+                                fieldParameters.setOriginX(200);
+                                fieldParameters.setOriginY(600);
+                                //fieldParameters.setFieldId("ExistingSignatureField");
+                                parameters.setImageParameters(imageParameters);
+                                CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
+                                PAdESService service = new PAdESService(commonCertificateVerifier);
+                                ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
+
+                                //DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
+                                //Digest digest = new Digest(digestAlgorithm, dataToSign.getBytes());
+                                //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+                                //Digest digest = new Digest(digestAlgorithm, DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
+                                requestBodyMap.put("hash", Base64.getEncoder().encodeToString(dataToSign.getBytes()));
+                                ObjectMapper objectMapper = new ObjectMapper();
+// Convert the map to JSON string
+                                String requestBody = objectMapper.writeValueAsString(requestBodyMap);
+                                connection.setDoOutput(true);
+                                connection.getOutputStream().write(requestBody.getBytes());
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                                StringBuilder response = new StringBuilder();
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    response.append(line);
+                                }
+                                reader.close();
+                                System.out.println("response: " + response);
+                                return response.toString();
+
+                                // the below portion is completely for XML signing
+                                /*
                                 XAdESSignatureParameters parameters = new XAdESSignatureParameters();
                                 parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
                                 parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED); // signature part of xml
                                 parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
-                                //parameters.setSigningCertificate(privateKey.getCertificate());
-                                //parameters.setCertificateChain(privateKey.getCertificateChain());
                                 ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
                                 ObjectInput in = new ObjectInputStream(bis);
                                 X509Certificate cert = (X509Certificate) in.readObject();
@@ -157,11 +220,13 @@ public class HelloApplication extends Application {
                                 DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
 
                                 ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
+                                Digest testDigest = new Digest(digestAlgorithm, dataToSign.getBytes());
+                                System.out.println("digest base64 without padding: \n" + Base64.getEncoder().encodeToString(testDigest.getValue()));
                                 Digest digest = new Digest(digestAlgorithm,
                                         addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
                                 System.out.println("digest base64 lll: \n" + Base64.getEncoder().encodeToString(digest.getValue()));
                                 System.out.println("xmlHash: \n" + Base64.getEncoder().encodeToString(digest.getValue()));
-                                requestBodyMap.put("xmlHash", Base64.getEncoder().encodeToString(digest.getValue()));
+                                requestBodyMap.put("hash", Base64.getEncoder().encodeToString(digest.getValue()));
                                 ObjectMapper objectMapper = new ObjectMapper();
 // Convert the map to JSON string
                                 String requestBody = objectMapper.writeValueAsString(requestBodyMap);
@@ -178,6 +243,7 @@ public class HelloApplication extends Application {
                                 reader.close();
                                 System.out.println("response: " + response);
                                 return response.toString();
+                                */
                             } catch(Exception e) {
                                 System.out.println("exception: " + e.getMessage());
                                 return null;
@@ -188,18 +254,69 @@ public class HelloApplication extends Application {
 
                     task.setOnSucceeded(workerStateEvent -> {
                         System.out.println("taskValue: "+ task.getValue());
-                        String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/sample.p12";
-                        SignatureTokenConnection signingToken = null;
+                        String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/samplebd.pfx";
+                        /*SignatureTokenConnection signingToken = null;
                         try {
                             signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
                         } catch (IOException e) {
                             throw new RuntimeException(e);
-                        }
+                        }*/
                         //DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
                         String response = task.getValue();
-                        File file = new File(filePathFinal);
-                        DSSDocument toSignDocument = new FileDocument(file);
-                        byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.substring(53,response.toString().length())));
+                        //File file = new File(filePathFinal);
+                        //DSSDocument toSignDocument = new FileDocument(file);
+                        System.out.println("Full response string: " + response);
+                        System.out.println("response substring: " + response.substring(85,response.length()-2));
+                        byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.substring(85,response.length()-2)));
+
+                        // this portion is for pdf signature
+
+                        PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+                        parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
+                        parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED);
+                        parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
+                        ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
+                        ObjectInput in = null;
+
+                        try {
+                            in = new ObjectInputStream(bis);
+                            X509Certificate cert = (X509Certificate) in.readObject();
+                            bis.close();
+                            CertificateToken baseCertificate = new CertificateToken(cert);
+                            parameters.setSigningCertificate(baseCertificate);
+                            parameters.setCertificateChain(certTokens);
+                            SignatureImageParameters imageParameters = new SignatureImageParameters();
+                            SignatureImageTextParameters textParameters = new SignatureImageTextParameters();
+                            DSSFont font = new DSSJavaFont(Font.SERIF);
+                            font.setSize(8);
+                            textParameters.setFont(font);
+                            textParameters.setTextColor(Color.BLUE);
+                            textParameters.setText(baseCertificate.getSubject().getPrincipal().getName().substring(3,24) + "\n" + "My Signature");
+                            imageParameters.setTextParameters(textParameters);
+                            SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
+                            imageParameters.setFieldParameters(fieldParameters);
+                            fieldParameters.setOriginX(200);
+                            fieldParameters.setOriginY(600);
+                            //fieldParameters.setFieldId("ExistingSignatureField");
+                            parameters.setImageParameters(imageParameters);
+                            CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
+                            PAdESService service = new PAdESService(commonCertificateVerifier);
+                            OnlineTSPSource tspSource = new OnlineTSPSource("http://tsa.belgium.be/connect");
+                            service.setTspSource(tspSource);
+                            SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
+                            DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
+                            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-final.pdf");
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } catch (ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        System.out.println("This is Successful");
+
+
+                        // the below portion is for xml signature
+                        /*
                         XAdESSignatureParameters parameters = new XAdESSignatureParameters();
                         parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
                         parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED); // signature part of xml
@@ -229,12 +346,13 @@ public class HelloApplication extends Application {
                         SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
                         DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
                         try {
-                            signedDocument.save("/Users/bccca/Downloads/deliverables-V1/signed-final.xml");
+                            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-final.xml");
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
 
                         System.out.println("This is Successful");
+                        */
 
                     });
                     task.setOnFailed(workerStateEvent -> {
@@ -272,11 +390,21 @@ public class HelloApplication extends Application {
                 @Override
                 protected String call() throws Exception {
                     // Replace URL with your endpoint
+
+                    Map<String, String> requestBodyMap = new HashMap<>();
+                    requestBodyMap.put("type","Dongle");
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String requestBody = objectMapper.writeValueAsString(requestBodyMap);
+                    //connection.setDoOutput(true);
+
+                    /*BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();*/
                     URL url = new URL(JSON_LIST_URL_PROMPT);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");
                     connection.setRequestProperty("Content-Type", "application/json");
                     connection.setDoOutput(true);
+                    connection.getOutputStream().write(requestBody.getBytes());
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
@@ -315,7 +443,7 @@ public class HelloApplication extends Application {
         try {
             File file = new File(filePath);
             DSSDocument toSignDocument = new FileDocument(file);
-            String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/sample.p12";
+            String pkcs12TokenFile = "C:\\Users\\Ahad\\Downloads\\deliverables-V1\\SampleAhad.p12.pfx";
             SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
             DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
             PAdESSignatureParameters parameters = new PAdESSignatureParameters();
@@ -335,9 +463,11 @@ public class HelloApplication extends Application {
                     "My signature");
             imageParameters.setTextParameters(textParameters);
             SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
+            imageParameters.setFieldParameters(fieldParameters);
             fieldParameters.setOriginX(200);
-            fieldParameters.setOriginY(1200);
-            fieldParameters.setFieldId("ExistingSignatureField");
+            fieldParameters.setOriginY(600);
+            //fieldParameters.setFieldId("ExistingSignatureField");
+
 
             parameters.setImageParameters(imageParameters);
             CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
@@ -345,8 +475,12 @@ public class HelloApplication extends Application {
             ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
 
             DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-            Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
-
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+            //Digest digest = new Digest(digestAlgorithm,DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
+            System.out.println("raw hash: " + Base64.getEncoder().encodeToString(dataToSign.getBytes()));
+            //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm,dataToSign.getBytes())));
+            Digest digest = new Digest(DigestAlgorithm.SHA256, addPadding(DSSUtils.digest(DigestAlgorithm.SHA256, dataToSign.getBytes())));
             JSONObject json = new JSONObject();
             json.put("password", password);
             json.put("pdfHash", Base64.getEncoder().encodeToString(digest.getValue()));
@@ -362,16 +496,17 @@ public class HelloApplication extends Application {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("response :" + response.body().toString());
+            System.out.println("response from pdf func:" + response.body().toString());
+            System.out.println("truncated response hash: " + response.body().substring(69,response.body().toString().length()-2));
             //System.out.println("Enter your string: \n");
 
             //Scanner scanner = new Scanner(System.in);
             //String str = scanner.nextLine();
-            byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.body().substring(53,response.body().toString().length())));
+            byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.body().substring(69,response.body().toString().length()-2)));
             SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
 
             DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
-            signedDocument.save("/Users/bccca/Downloads/deliverables-V1/signed-demo.pdf");
+            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-demo.pdf");
 
         } catch(Exception e) {
             System.out.println(e.getMessage());
@@ -384,7 +519,7 @@ public class HelloApplication extends Application {
             File file = new File(filePathFinal);
             DSSDocument toSignDocument = new FileDocument(file);
 
-            String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/sample.p12";
+            String pkcs12TokenFile = "C:\\Users\\Ahad\\Downloads\\deliverables-V1\\SampleAhad.p12.pfx";
             SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
             DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
             XAdESSignatureParameters parameters = new XAdESSignatureParameters();
@@ -404,11 +539,14 @@ public class HelloApplication extends Application {
             ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
             Digest digest = new Digest(digestAlgorithm,
                     addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
-            System.out.println("digest base64: \n" + Base64.getEncoder().encodeToString(digest.getValue()));
+            //Digest digest = new Digest(digestAlgorithm,
+                    //addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
+            String digestBase64 = Base64.getEncoder().encodeToString(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
+            System.out.println("digest base64: \n" + digestBase64);
 
             JSONObject json = new JSONObject();
             json.put("password", password);
-            json.put("xmlHash", Base64.getEncoder().encodeToString(digest.getValue()));
+            json.put("xmlHash", digestBase64);
             json.put("alias",alias);
             StringEntity params = new StringEntity(json.toString());
 
@@ -427,7 +565,7 @@ public class HelloApplication extends Application {
 
             SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
             DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
-            signedDocument.save("/Users/bccca/Downloads/deliverables-V1/signed-final.xml");
+            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-demo.xml");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }   catch (InterruptedException e) {
@@ -506,7 +644,7 @@ public class HelloApplication extends Application {
             File file = new File(filePathFinal);
             DSSDocument toSignDocument = new FileDocument(file);
 
-            String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/sample.p12";
+            String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/samplebd.pfx";
             SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
             DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
             XAdESSignatureParameters parameters = new XAdESSignatureParameters();
