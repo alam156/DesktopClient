@@ -115,10 +115,10 @@ public class HelloApplication extends Application {
                 if (selectedObject != null) {
                     //signXmlDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
                     //signPdfDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
-                    signPdfDemoWithCertificate(filePathFinal,"aSdf1234**","3C70BBE13F880766");
+                    //signPdfDemoWithCertificate(filePathFinal,"aSdf1234**","3C70BBE13F880766");
                     File file = new File(filePathFinal);
                     DSSDocument toSignDocument = new FileDocument(file);
-
+                    PAdESSignatureParameters parameters = new PAdESSignatureParameters();
                     Task<String> task = new Task<>() {
 
                         @Override
@@ -148,7 +148,7 @@ public class HelloApplication extends Application {
 //                                DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
 
 
-                                PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+                                //PAdESSignatureParameters parameters = new PAdESSignatureParameters();
 //                                parameters.setSigningCertificate(privateKey.getCertificate());
 //                                parameters.setCertificateChain(privateKey.getCertificateChain());
                                 parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
@@ -272,7 +272,7 @@ public class HelloApplication extends Application {
 
                         // this portion is for pdf signature
 
-                        PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+                       // PAdESSignatureParameters parameters = new PAdESSignatureParameters();
                         parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
                         parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED);
                         parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
