@@ -1,4 +1,5 @@
 # Desktop Client
+`clone from develop-beta branch`
 `Change 309'th line's output directory`
 
 ### Current path
