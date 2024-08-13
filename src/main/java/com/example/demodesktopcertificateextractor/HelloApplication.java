@@ -113,12 +113,10 @@ public class HelloApplication extends Application {
                 List<CertificateToken> certTokens = new ArrayList<>();
                // CertificateToken baseCertificate = null;
                 if (selectedObject != null) {
-                    //signXmlDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
-                    //signPdfDemo(filePathFinal,"aSdf1234**","3C70BBE13F880766");
-                    //signPdfDemoWithCertificate(filePathFinal,"aSdf1234**","3C70BBE13F880766");
                     File file = new File(filePathFinal);
                     DSSDocument toSignDocument = new FileDocument(file);
-                    PAdESSignatureParameters parameters = new PAdESSignatureParameters();
+                    XAdESSignatureParameters parameters = new XAdESSignatureParameters();
+                    //PAdESSignatureParameters parameters = new PAdESSignatureParameters();
                     Task<String> task = new Task<>() {
 
                         @Override
@@ -151,8 +149,10 @@ public class HelloApplication extends Application {
                                 //PAdESSignatureParameters parameters = new PAdESSignatureParameters();
 //                                parameters.setSigningCertificate(privateKey.getCertificate());
 //                                parameters.setCertificateChain(privateKey.getCertificateChain());
-                                parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
+                                parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
+                                //parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
                                 parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
+                                parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED);
 
                                 ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
                                 ObjectInput in = new ObjectInputStream(bis);
@@ -162,28 +162,12 @@ public class HelloApplication extends Application {
                                 parameters.setSigningCertificate(baseCertificate);
                                 parameters.setCertificateChain(certTokens);
 
-                                SignatureImageParameters imageParameters = new SignatureImageParameters();
-                                SignatureImageTextParameters textParameters = new SignatureImageTextParameters();
-                                DSSFont font = new DSSJavaFont(Font.SERIF);
-                                font.setSize(8);
-                                textParameters.setFont(font);
-                                textParameters.setTextColor(Color.BLUE);
-                                textParameters.setText(baseCertificate.getSubject().getPrincipal().getName().substring(3,24) + "\n" + "My Signature");
-                                imageParameters.setTextParameters(textParameters);
-                                SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
-                                imageParameters.setFieldParameters(fieldParameters);
-                                fieldParameters.setOriginX(200);
-                                fieldParameters.setOriginY(600);
+
                                 //fieldParameters.setFieldId("ExistingSignatureField");
-                                parameters.setImageParameters(imageParameters);
                                 CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
-                                PAdESService service = new PAdESService(commonCertificateVerifier);
+                                XAdESService service = new XAdESService(commonCertificateVerifier);
                                 ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
 
-                                //DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-                                //Digest digest = new Digest(digestAlgorithm, dataToSign.getBytes());
-                                //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
-                                //Digest digest = new Digest(digestAlgorithm, DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
                                 requestBodyMap.put("hash", Base64.getEncoder().encodeToString(dataToSign.getBytes()));
                                 ObjectMapper objectMapper = new ObjectMapper();
 // Convert the map to JSON string
@@ -273,7 +257,7 @@ public class HelloApplication extends Application {
                         // this portion is for pdf signature
 
                        // PAdESSignatureParameters parameters = new PAdESSignatureParameters();
-                        parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
+                        parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
                         parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED);
                         parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
                         ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
@@ -286,27 +270,14 @@ public class HelloApplication extends Application {
                             CertificateToken baseCertificate = new CertificateToken(cert);
                             parameters.setSigningCertificate(baseCertificate);
                             parameters.setCertificateChain(certTokens);
-                            SignatureImageParameters imageParameters = new SignatureImageParameters();
-                            SignatureImageTextParameters textParameters = new SignatureImageTextParameters();
-                            DSSFont font = new DSSJavaFont(Font.SERIF);
-                            font.setSize(8);
-                            textParameters.setFont(font);
-                            textParameters.setTextColor(Color.BLUE);
-                            textParameters.setText(baseCertificate.getSubject().getPrincipal().getName().substring(3,24) + "\n" + "My Signature");
-                            imageParameters.setTextParameters(textParameters);
-                            SignatureFieldParameters fieldParameters = new SignatureFieldParameters();
-                            imageParameters.setFieldParameters(fieldParameters);
-                            fieldParameters.setOriginX(200);
-                            fieldParameters.setOriginY(600);
-                            //fieldParameters.setFieldId("ExistingSignatureField");
-                            parameters.setImageParameters(imageParameters);
+
                             CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
-                            PAdESService service = new PAdESService(commonCertificateVerifier);
+                            XAdESService service = new XAdESService(commonCertificateVerifier);
                             OnlineTSPSource tspSource = new OnlineTSPSource("http://tsa.belgium.be/connect");
                             service.setTspSource(tspSource);
                             SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
                             DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
-                            signedDocument.save("/Users/bccca/Desktop/deliverables/signed-final.pdf");
+                            signedDocument.save("/Users/bccca/Desktop/deliverables/signed-final.xml");
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         } catch (ClassNotFoundException e) {
