@@ -2,6 +2,9 @@
 `clone from develop-beta branch`
 `Change 309'th line's output directory`
 
+### XML signer POC
+`switch to develop-beta-xml to see xml signer POC`
+
 ### Current path
 ```
 signedDocument.save("/Users/bccca/Desktop/deliverables/signed-final.pdf");
