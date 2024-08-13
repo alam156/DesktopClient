@@ -1,3 +1,11 @@
+# Desktop Client
+`Change 309'th line's output directory`
+
+### Current path
+```
+signedDocument.save("/Users/bccca/Desktop/deliverables/signed-final.pdf");
+```
+
 # Hash Signer Application
 This is a HashSigner application which will run in background while applying digital signature in a pdf or xml file.
 
