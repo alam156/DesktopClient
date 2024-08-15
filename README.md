@@ -12,6 +12,7 @@ signedDocument.save("/Users/bccca/Desktop/deliverables/signed-final.pdf");
 
 # Hash Signer Application
 This is a HashSigner application which will run in background while applying digital signature in a pdf or xml file.
+PKCS11 library should resides in `/usr/local/lib/libeTPkcs11.dylib`
 
 # REST API documentation
 
