@@ -140,17 +140,6 @@ public class HelloApplication extends Application {
                                 requestBodyMap.put("alias",selectedObject.alias );
                                 requestBodyMap.put("type",selectedObject.type);
 
-
-
-                                //String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/SampleAhad.p12";
-//                                String pkcs12TokenFile = "C:\\Users\\Ahad\\Downloads\\deliverables-V1\\SampleAhad.p12.pfx";
-//                                SignatureTokenConnection signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
-//                                DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
-
-
-                                //PAdESSignatureParameters parameters = new PAdESSignatureParameters();
-//                                parameters.setSigningCertificate(privateKey.getCertificate());
-//                                parameters.setCertificateChain(privateKey.getCertificateChain());
                                 parameters.setSignatureLevel(SignatureLevel.PAdES_BASELINE_B);
                                 parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
 
@@ -174,16 +163,11 @@ public class HelloApplication extends Application {
                                 imageParameters.setFieldParameters(fieldParameters);
                                 fieldParameters.setOriginX(200);
                                 fieldParameters.setOriginY(600);
-                                //fieldParameters.setFieldId("ExistingSignatureField");
                                 parameters.setImageParameters(imageParameters);
                                 CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
                                 PAdESService service = new PAdESService(commonCertificateVerifier);
                                 ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
 
-                                //DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-                                //Digest digest = new Digest(digestAlgorithm, dataToSign.getBytes());
-                                //Digest digest = new Digest(digestAlgorithm, addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
-                                //Digest digest = new Digest(digestAlgorithm, DSSUtils.digest(digestAlgorithm, dataToSign.getBytes()));
                                 requestBodyMap.put("hash", Base64.getEncoder().encodeToString(dataToSign.getBytes()));
                                 ObjectMapper objectMapper = new ObjectMapper();
 // Convert the map to JSON string
@@ -199,52 +183,6 @@ public class HelloApplication extends Application {
                                 reader.close();
                                 System.out.println("response: " + response);
                                 return response.toString();
-
-                                // the below portion is completely for XML signing
-                                /*
-                                XAdESSignatureParameters parameters = new XAdESSignatureParameters();
-                                parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
-                                parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED); // signature part of xml
-                                parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
-                                ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
-                                ObjectInput in = new ObjectInputStream(bis);
-                                X509Certificate cert = (X509Certificate) in.readObject();
-                                bis.close();
-                                CertificateToken baseCertificate = new CertificateToken(cert);
-                                parameters.setSigningCertificate(baseCertificate);
-                                parameters.setCertificateChain(certTokens);
-                                CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
-                                XAdESService service = new XAdESService(commonCertificateVerifier);
-                                OnlineTSPSource tspSource = new OnlineTSPSource("http://tsa.belgium.be/connect");
-                                service.setTspSource(tspSource);
-
-                                DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-
-                                ToBeSigned dataToSign = service.getDataToSign(toSignDocument, parameters);
-                                Digest testDigest = new Digest(digestAlgorithm, dataToSign.getBytes());
-                                System.out.println("digest base64 without padding: \n" + Base64.getEncoder().encodeToString(testDigest.getValue()));
-                                Digest digest = new Digest(digestAlgorithm,
-                                        addPadding(DSSUtils.digest(digestAlgorithm, dataToSign.getBytes())));
-                                System.out.println("digest base64 lll: \n" + Base64.getEncoder().encodeToString(digest.getValue()));
-                                System.out.println("xmlHash: \n" + Base64.getEncoder().encodeToString(digest.getValue()));
-                                requestBodyMap.put("hash", Base64.getEncoder().encodeToString(digest.getValue()));
-                                ObjectMapper objectMapper = new ObjectMapper();
-// Convert the map to JSON string
-                                String requestBody = objectMapper.writeValueAsString(requestBodyMap);
-                                connection.setDoOutput(true);
-                                connection.getOutputStream().write(requestBody.getBytes());
-
-
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                                StringBuilder response = new StringBuilder();
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    response.append(line);
-                                }
-                                reader.close();
-                                System.out.println("response: " + response);
-                                return response.toString();
-                                */
                             } catch(Exception e) {
                                 System.out.println("exception: " + e.getMessage());
                                 return null;
@@ -255,17 +193,7 @@ public class HelloApplication extends Application {
 
                     task.setOnSucceeded(workerStateEvent -> {
                         System.out.println("taskValue: "+ task.getValue());
-                        String pkcs12TokenFile = "/Users/bccca/Downloads/deliverables-V1/samplebd.pfx";
-                        /*SignatureTokenConnection signingToken = null;
-                        try {
-                            signingToken = new Pkcs12SignatureToken(pkcs12TokenFile, new KeyStore.PasswordProtection("bccca".toCharArray()));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }*/
-                        //DSSPrivateKeyEntry privateKey = signingToken.getKeys().get(0);
                         String response = task.getValue();
-                        //File file = new File(filePathFinal);
-                        //DSSDocument toSignDocument = new FileDocument(file);
                         System.out.println("Full response string: " + response);
                         System.out.println("response substring: " + response.substring(85,response.length()-2));
                         byte[] bytes = Utils.fromBase64(escapeCharFromSignature(response.substring(85,response.length()-2)));
@@ -314,74 +242,12 @@ public class HelloApplication extends Application {
                         }
 
                         System.out.println("This is Successful");
-
-
-                        // the below portion is for xml signature
-                        /*
-                        XAdESSignatureParameters parameters = new XAdESSignatureParameters();
-                        parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
-                        parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED); // signature part of xml
-                        parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
-                        ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(selectedObject.getCertificate()));
-                        ObjectInput in = null;
-                        try {
-                            in = new ObjectInputStream(bis);
-                            X509Certificate cert = (X509Certificate) in.readObject();
-                            bis.close();
-                            CertificateToken baseCertificate = new CertificateToken(cert);
-                            parameters.setSigningCertificate(baseCertificate);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-
-
-                        //parameters.setSigningCertificate(privateKey.getCertificate());
-                        parameters.setCertificateChain(certTokens);
-
-                        CommonCertificateVerifier commonCertificateVerifier = new CommonCertificateVerifier();
-                        XAdESService service = new XAdESService(commonCertificateVerifier);
-                        OnlineTSPSource tspSource = new OnlineTSPSource("http://tsa.belgium.be/connect");
-                        service.setTspSource(tspSource);
-                        SignatureValue signatureValue = new SignatureValue(parameters.getSignatureAlgorithm(), bytes);
-                        DSSDocument signedDocument = service.signDocument(toSignDocument, parameters, signatureValue);
-                        try {
-                            signedDocument.save("C:\\Users\\Ahad\\Downloads\\deliverables-V1\\signed-final.xml");
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        System.out.println("This is Successful");
-                        */
-
                     });
                     task.setOnFailed(workerStateEvent -> {
                         System.out.println("failedValue" + task.getValue());
                     });
 
                     new Thread(task).start();
-
-                    /*if (!password.isEmpty()) {
-                        if(filePathFinal.substring(filePathFinal.length()-3,filePathFinal.length()).equals("pdf")) {
-                            signPdfDemoPrompt(filePathFinal,alias);
-                        }
-                        else if(filePathFinal.substring(filePathFinal.length()-3,filePathFinal.length()).equals("xml")) {
-                            signXmlDemoPrompt(filePathFinal,alias);
-                        }
-
-                    } else {
-                        // Show an alert if the password field is empty
-                        Alert alert = new Alert(Alert.AlertType.WARNING);
-                        alert.setTitle("Warning");
-                        alert.setHeaderText(null);
-                        alert.setContentText("Please enter a password!");
-                        alert.showAndWait();
-                    }*/
-                    //String lastName = selectedObject.getLastName();
-                    // Replace this with your API call logic
-                    //System.out.println("Making API call for: " + firstName + " " + lastName);
-                    // You can now make your API call using firstName, lastName, and any other data you need
                 }
             }
         });

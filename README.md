@@ -110,3 +110,57 @@ PKCS11 library should resides in `/usr/local/lib/libeTPkcs11.dylib`
     "hashResponse": "QJLnCT2OAYokU4OmuB0w11dSG3qXwhluX2pBRm0QdphZGjKGMFnnMWZHe/MynevrYqwjE9ffipiH0nQU0hax7uWkk8Cr4FO4Y0UsSTtPf3xDU5QRJJT53kPU+ktsoOJ3zSoQFUOdcYYCbK4b2ZPpvMX2w57q+RO5rAl9R6LEsdkWz1O4JI+v5kmv8kE5T3b3cGu4i09FlqpfJeCbIluEvRGPmqdhKUahgLpOXMFVv59bCnxrt/1I59ltBm/PucokBw9Bour+fK+suWG/R9NLMQXya/DEIAwE1a1xWVsuRfh64khonD2lH8XVqeeOK28ecqUYPZpEQtwAl41zIwb1Zg=="
 }
 ```
+### Request
+`POST localhost:8089/api/sign-bulk-hash`
+
+### Request Body
+```
+{
+	"alias": alias,
+	"hash":[
+	    hashString1,
+	    hashString2,
+	    hashString3
+	],
+	"type":"Dongle" or "Native"
+}
+```
+### Response
+```
+{
+	"status": "success",
+	"code": "200",
+	"message": HashSigned Successfully,
+	"hashResponse": [
+	    hashResponse1,
+	    hashResponse2,
+	    hashResponse3
+	]
+}
+```
+### Example Request Body
+```
+{
+    "alias": "9EB0F5DC7A4C5350",
+    "hashList": [
+        "NVrzrkRo9e2Y1qmd4rTd0QxAzrrhTODG5thhlA4jdiA=",
+        "NVrzrkRo9e2Y1qmd4rTd0QxAzrrhTODG5thhlA4jdiA=",
+        "NVrzrkRo9e2Y1qmd4rTd0QxAzrrhTODG5thhlA4jdiA="
+        
+    ],
+    "type": "Dongle"
+}
+```
+### Example Response
+```
+{
+    "status": "success",
+    "code": "200",
+    "message": "HashSigned Successfully",
+    "hashResponse": [
+        "r0dvKKYiwGh8sJmcczP+X5xZFiefUF1YXH8+FfrFg0QN5RXfEY5dg1yvtSeHG/ORuvwFanZOT/nc7mSVmhM1cMsER91gf0+Mrj8bv7TACgIb6XhjYPR0DZggIZ2ZTV6GJlp9/R4lQZv1DTyq5k4TVMdezCswLW86V2oeHWWu2805v52M+QS9pmDLJt0gcICt8/0FGvfNlSAO7Ta88MaEpJY7qiOeh4PPfOvuXjovXkgUkFSO3+lbm86VRZCwKSeELVZmWXn6IrN7weEL3+hgTr4wzDQTwni9q9Ep8cMQx5JWq73sasHFRzlRU1y7D5qXBJg5XHDHR6ZshFhPpZ2EPQ==",
+        "r0dvKKYiwGh8sJmcczP+X5xZFiefUF1YXH8+FfrFg0QN5RXfEY5dg1yvtSeHG/ORuvwFanZOT/nc7mSVmhM1cMsER91gf0+Mrj8bv7TACgIb6XhjYPR0DZggIZ2ZTV6GJlp9/R4lQZv1DTyq5k4TVMdezCswLW86V2oeHWWu2805v52M+QS9pmDLJt0gcICt8/0FGvfNlSAO7Ta88MaEpJY7qiOeh4PPfOvuXjovXkgUkFSO3+lbm86VRZCwKSeELVZmWXn6IrN7weEL3+hgTr4wzDQTwni9q9Ep8cMQx5JWq73sasHFRzlRU1y7D5qXBJg5XHDHR6ZshFhPpZ2EPQ==",
+        "r0dvKKYiwGh8sJmcczP+X5xZFiefUF1YXH8+FfrFg0QN5RXfEY5dg1yvtSeHG/ORuvwFanZOT/nc7mSVmhM1cMsER91gf0+Mrj8bv7TACgIb6XhjYPR0DZggIZ2ZTV6GJlp9/R4lQZv1DTyq5k4TVMdezCswLW86V2oeHWWu2805v52M+QS9pmDLJt0gcICt8/0FGvfNlSAO7Ta88MaEpJY7qiOeh4PPfOvuXjovXkgUkFSO3+lbm86VRZCwKSeELVZmWXn6IrN7weEL3+hgTr4wzDQTwni9q9Ep8cMQx5JWq73sasHFRzlRU1y7D5qXBJg5XHDHR6ZshFhPpZ2EPQ=="
+    ]
+}
+```
